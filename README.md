@@ -6,7 +6,7 @@
 
 ### Lien du Jeu : https://tafsoutabdi.github.io/jeu_sys_IA/
 
-### Lien vidéo Youtube : 
+### Lien vidéo Youtube : https://www.youtube.com/watch?v=-uwqCphGZuU 
 
 ## Sommaire
 
