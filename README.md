@@ -4,6 +4,10 @@
 
 ---
 
+### Lien du Jeu : https://tafsoutabdi.github.io/jeu_sys_IA/
+
+### Lien vidéo Youtube : 
+
 ## Sommaire
 
 1. [Présentation du projet](#1-présentation-du-projet)
