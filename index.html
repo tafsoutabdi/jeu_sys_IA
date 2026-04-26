@@ -1,248 +1,262 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🐟 FishRace - Neuro-Evolutionary Racing</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuroévolution Racing v2</title>
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Librairies -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+    <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+
+    <!-- Scripts -->
+    <script src="js/globals.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/NeuralNetwork.js"></script>
+    <script src="js/Ray.js"></script>
+    <script src="js/Track.js"></script>
+    <script src="js/Car.js"></script>
+    <script src="js/Genetic.js"></script>
+    <script src="js/CircuitEditor.js"></script>
+    <script src="js/BrainManager.js"></script>
+    <script src="js/ML5Control.js"></script>
+    <script src="js/main.js"></script>
 </head>
 <body>
-  <div class="container">
 
-    <header>
-      <h1>🐟 FishRace <span class="subtitle">Neuro-Evolutionary Racing Simulator</span></h1>
-    </header>
+<div id="canvas-container"></div>
 
-    <div class="main-content">
+<!-- Éditeur de circuit -->
+<div id="edit-controls">
+    <button class="btn success" id="btn-apply-track">✅ Appliquer le circuit</button>
+    <button class="btn danger" id="btn-cancel-edit">✕ Annuler</button>
+</div>
 
-      <!-- Canvas p5.js -->
-      <div id="canvas-container"></div>
+<!-- Overlay succès -->
+<div id="success-overlay">
+    <div id="success-card">
+        <h2>🏆 Objectif atteint !</h2>
+        <p id="success-text"></p>
+        <button class="btn primary" onclick="document.getElementById('success-overlay').style.display='none'">Continuer</button>
+    </div>
+</div>
 
-      <!-- Panneau de contrôle -->
-      <aside class="control-panel">
-
-        <!-- RÉSEAU DE NEURONES -->
-        <div class="panel-section">
-          <h2>🧠 Réseau de Neurones</h2>
-
-          <label>
-            Capteurs (entrées)
-            <div class="slider-row">
-              <input type="range" id="sensorCount" min="3" max="21" value="7" step="2">
-              <span id="sensorCountValue">7</span>
-            </div>
-          </label>
-
-          <label>
-            Couches cachées
-            <div class="slider-row">
-              <input type="range" id="hiddenLayers" min="1" max="5" value="2" step="1">
-              <span id="hiddenLayersValue">2</span>
-            </div>
-          </label>
-
-          <label>
-            Neurones / couche
-            <div class="slider-row">
-              <input type="range" id="hiddenNeurons" min="4" max="128" value="16" step="4">
-              <span id="hiddenNeuronsValue">16</span>
-            </div>
-          </label>
-
-          <label>
-            Activation
-            <select id="activationFunction">
-              <option value="relu" selected>ReLU</option>
-              <option value="sigmoid">Sigmoid</option>
-              <option value="tanh">Tanh</option>
-              <option value="elu">ELU</option>
-            </select>
-          </label>
-        </div>
-
-        <!-- GÉNÉTIQUE -->
-        <div class="panel-section">
-          <h2>🧬 Algorithme Génétique</h2>
-
-          <label>
-            Taux de mutation
-            <div class="slider-row">
-              <input type="range" id="mutationRate" min="0.01" max="0.5" value="0.1" step="0.01">
-              <span id="mutationRateValue">0.10</span>
-            </div>
-          </label>
-
-          <label>
-            Taille population
-            <div class="slider-row">
-              <input type="range" id="populationSize" min="20" max="300" value="80" step="20">
-              <span id="populationSizeValue">80</span>
-            </div>
-          </label>
-
-          <label>
-            Durée de vie (frames)
-            <div class="slider-row">
-              <input type="range" id="lifespan" min="100" max="1000" value="400" step="50">
-              <span id="lifespanValue">400</span>
-            </div>
-          </label>
-        </div>
-
-        <!-- CONDITIONS D'ARRÊT -->
-        <div class="panel-section">
-          <h2>🛑 Condition d'arrêt</h2>
-
-          <label>
-            Taux de réussite cible
-            <div class="slider-row">
-              <input type="range" id="targetSuccessRate" min="0.1" max="1.0" value="0.6" step="0.05">
-              <span id="targetSuccessRateValue">60%</span>
-            </div>
-          </label>
-
-          <label>
-            Générations max
-            <div class="slider-row">
-              <input type="range" id="maxGenerations" min="50" max="500" value="300" step="25">
-              <span id="maxGenerationsValue">300</span>
-            </div>
-          </label>
-        </div>
-
-        <!-- CIRCUIT -->
-        <div class="panel-section">
-          <h2>🏎️ Circuit</h2>
-
-          <label>
-            Difficulté
-            <select id="circuitDifficulty">
-              <option value="easy">Facile</option>
-              <option value="medium" selected>Moyen</option>
-              <option value="hard">Difficile</option>
-            </select>
-          </label>
-
-          <div class="button-group">
-            <button id="generateNewCircuit" class="btn-secondary">🔄 Nouveau Circuit</button>
-            <button id="saveCircuit" class="btn-secondary">💾 Sauver Circuit</button>
-            <button id="loadCircuit" class="btn-secondary">📂 Charger Circuit</button>
-          </div>
-
-          <p class="hint">SHIFT + Clic sur le circuit pour ajouter un obstacle ⛔</p>
-        </div>
-
-        <!-- CONTRÔLES -->
-        <div class="panel-section">
-          <h2>🎮 Contrôles</h2>
-
-          <div class="button-group">
-            <button id="trainButton" class="btn-primary">▶ Entraîner</button>
-            <button id="pauseButton" class="btn-secondary">⏸ Pause</button>
-            <button id="resetButton" class="btn-danger">🔄 Reset</button>
-          </div>
-
-          <label>
-            Vitesse simulation
-            <div class="slider-row">
-              <input type="range" id="speedSlider" min="1" max="15" value="1" step="1">
-              <span id="speedSliderValue">1x</span>
-            </div>
-          </label>
-
-          <div class="key-hints">
-            <span>T = Entraîner/Pause</span>
-            <span>D = Debug</span>
-            <span>S = Sauver</span>
-            <span>N = Nouveau circuit</span>
-            <span>H = Contrôle main</span>
-          </div>
-        </div>
-
-        <!-- CERVEAUX -->
-        <div class="panel-section">
-          <h2>💾 Cerveaux</h2>
-
-          <div class="brain-list" id="brainList">
-            <p>Aucun cerveau sauvegardé</p>
-          </div>
-
-          <div class="button-group">
-            <button id="saveBrain" class="btn-secondary">💾 Sauver Meilleur</button>
-            <button id="exportBrains" class="btn-secondary">📤 Exporter JSON</button>
-          </div>
-
-          <label class="file-label">
-            📥 Importer cerveaux
-            <input type="file" id="importBrainsFile" accept=".json" style="display:none">
-          </label>
-        </div>
-
-        <!-- COMPÉTITION -->
-        <div class="panel-section">
-          <h2>🏆 Compétition</h2>
-          <p class="hint">Entraînez plusieurs cerveaux, puis faites-les courir ensemble !</p>
-          <button id="competitionMode" class="btn-primary">🏆 Lancer Compétition</button>
-        </div>
-
-        <!-- ML5 -->
-        <div class="panel-section">
-          <h2>🤖 ML5.js HandPose</h2>
-          <p class="hint">Contrôlez un poisson avec votre main via la webcam.</p>
-          <button id="enableHandControl" class="btn-secondary">🖐 Activer Contrôle Main</button>
-          <label style="margin-top:8px;">
-            <input type="checkbox" id="showDebug">
-            Afficher informations debug
-          </label>
-        </div>
-
-        <!-- STATS -->
-        <div class="panel-section statistics">
-          <h2>📊 Statistiques</h2>
-          <div id="stats">
-            <div class="stat-row"><span>Génération</span><strong id="genCount">0</strong></div>
-            <div class="stat-row"><span>Fitness Moy.</span><strong id="fitnessMean">0</strong></div>
-            <div class="stat-row"><span>Fitness Max</span><strong id="fitnessMax">0</strong></div>
-            <div class="stat-row"><span>Population</span><strong id="populationCount">0</strong>/<span id="totalPopulation">80</span></div>
-            <div class="stat-row"><span>Meilleur CP</span><strong id="bestCheckpoint">0</strong></div>
-            <div class="stat-row"><span>Taux Réussite</span><strong id="successRate">0%</strong></div>
-          </div>
-        </div>
-
-      </aside>
+<!-- Panneau principal -->
+<div id="ui">
+    <div id="ui-header">
+        <h1>⚡ NevoRacing</h1>
+        <div class="sub">Neuroévolution Racing v2</div>
+        <div id="topo-info">[7→20→2]</div>
     </div>
 
-    <footer>
-      <p>Projet M2 IA 2025-2026 · TensorFlow.js · p5.js · ML5.js</p>
-      <p>Raccourcis : T = Entraîner | SPACE = Pause | D = Debug | S = Sauver | N = Nouveau circuit | H = Main</p>
-    </footer>
-
-  </div>
-
-  <!-- Modal Compétition -->
-  <div id="competitionModal" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <h2>🏆 Mode Compétition</h2>
-      <div id="competitionBrains">
-        <p>Chargement des cerveaux...</p>
-      </div>
-      <button id="startCompetition" class="btn-primary" style="margin-top:12px;">🚀 Démarrer</button>
+    <!-- Onglets -->
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="train" id="tab-train">Train</button>
+        <button class="tab-btn" data-tab="nn" id="tab-nn">Réseau</button>
+        <button class="tab-btn" data-tab="circuit" id="tab-circuit">Circuit</button>
+        <button class="tab-btn" data-tab="race" id="tab-race">Course</button>
+        <button class="tab-btn" data-tab="misc" id="tab-misc">Misc</button>
     </div>
-  </div>
 
-  <!-- Scripts — ordre important -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
+    <!-- ===== ONGLET ENTRAÎNEMENT ===== -->
+    <div class="tab-panel active" id="panel-train">
 
-  <script src="nn.js"></script>
-  <script src="ga.js"></script>
-  <script src="fish.js"></script>
-  <script src="circuit.js"></script>
-  <script src="brain-manager.js"></script>
-  <script src="config.js"></script>
-  <script src="ml5-integration.js"></script>
-  <script src="sketch.js"></script>
+        <div class="section">
+            <div class="section-title">Simulation</div>
+            <div class="control-row">
+                <div class="control-label">Vitesse max <span id="speedVal">6</span></div>
+                <input type="range" id="speedSlider" min="2" max="30" value="6" step="1">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Population <span id="popVal">50</span></div>
+                <input type="range" id="popSlider" min="10" max="200" value="50" step="5">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Taux de mutation <span id="mutVal">0.15</span></div>
+                <input type="range" id="mutSlider" min="1" max="50" value="15" step="1">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Condition d'arrêt <span id="stopVal">0.60</span></div>
+                <input type="range" id="stopSlider" min="10" max="100" value="60" step="5">
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Actions</div>
+            <button class="btn primary" id="btn-reset">↺ Réinitialiser entraînement</button>
+            <button class="btn" id="btn-new-track">🗺 Nouveau circuit aléatoire</button>
+            <div class="sep"></div>
+            <input type="text" id="brain-name" placeholder="Nom du cerveau…">
+            <button class="btn success" id="btn-save-brain">💾 Sauvegarder meilleur cerveau</button>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Légende</div>
+            <div class="legend-row"><span class="legend-dot" style="background:#00ff00"></span>Leader actuel</div>
+            <div class="legend-row"><span class="legend-dot" style="background:#ffff00"></span>Capteurs (rayons)</div>
+            <div class="legend-row"><span class="legend-dot" style="background:#0055ff"></span>Waypoints</div>
+            <div class="legend-row"><span class="legend-dot" style="background:#ff6600"></span>Obstacles (Ctrl+clic)</div>
+        </div>
+
+    </div>
+
+    <!-- ===== ONGLET RÉSEAU ===== -->
+    <div class="tab-panel" id="panel-nn">
+
+        <div class="section">
+            <div class="section-title">Entrées</div>
+            <div class="control-row">
+                <div class="control-label">Rayons capteurs <span id="raysVal">5</span></div>
+                <input type="range" id="raysSlider" min="1" max="12" value="5" step="1">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Waypoints suivants <span id="waypointsVal">2</span></div>
+                <input type="range" id="waypointsSlider" min="0" max="5" value="2" step="1">
+            </div>
+            <div class="check-row">
+                <input type="checkbox" id="useSpeedCheck" checked>
+                <label for="useSpeedCheck">Vitesse normalisée en entrée</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Architecture cachée</div>
+            <div class="control-row">
+                <div class="control-label">Couches cachées <span id="hiddenVal">1</span></div>
+                <input type="range" id="hiddenSlider" min="1" max="5" value="1" step="1">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Neurones/couche <span id="neuronsVal">20</span></div>
+                <input type="range" id="neuronsSlider" min="4" max="128" value="20" step="2">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Activation</div>
+                <select id="activationSelect">
+                    <option value="sigmoid">Sigmoid</option>
+                    <option value="relu">ReLU</option>
+                    <option value="tanh">Tanh</option>
+                    <option value="elu">ELU</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">⚠ Attention</div>
+            <p style="font-size:0.65rem;color:var(--text-dim);line-height:1.5">
+                Modifier la topologie réinitialise l'entraînement car les cerveaux existants sont incompatibles avec la nouvelle architecture.
+            </p>
+        </div>
+
+    </div>
+
+    <!-- ===== ONGLET CIRCUIT ===== -->
+    <div class="tab-panel" id="panel-circuit">
+
+        <div class="section">
+            <div class="section-title">Génération</div>
+            <div class="control-row">
+                <div class="control-label">Complexité <span id="diffVal">10</span></div>
+                <input type="range" id="diffSlider" min="1" max="50" value="10" step="1">
+            </div>
+            <div class="control-row">
+                <div class="control-label">Largeur piste <span id="widthVal">100</span></div>
+                <input type="range" id="widthSlider" min="35" max="150" value="100" step="5">
+            </div>
+            <button class="btn" id="btn-edit-track">✏️ Éditer manuellement</button>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Sauvegarder circuit</div>
+            <input type="text" id="circuit-name" placeholder="Nom du circuit…">
+            <button class="btn primary" id="btn-save-circuit">💾 Sauvegarder</button>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Circuits sauvegardés</div>
+            <div class="list-container" id="circuit-list">
+                <div style="padding:8px;font-size:0.65rem;color:var(--text-dim);text-align:center">Aucun circuit sauvegardé</div>
+            </div>
+            <div class="btn-row">
+                <button class="btn" id="btn-export-circuits" style="flex:1">⬇ Exporter</button>
+                <label class="btn" style="flex:1;cursor:pointer;text-align:center">
+                    ⬆ Importer
+                    <input type="file" id="import-circuits" accept=".json">
+                </label>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===== ONGLET COURSE ===== -->
+    <div class="tab-panel" id="panel-race">
+
+        <div class="section">
+            <div class="section-title">Cerveaux sauvegardés</div>
+            <div class="list-container" id="brains-list">
+                <div style="padding:8px;font-size:0.65rem;color:var(--text-dim);text-align:center">Aucun cerveau sauvegardé</div>
+            </div>
+            <div class="btn-row">
+                <button class="btn" id="btn-export-brains" style="flex:1">⬇ Exporter</button>
+                <label class="btn" style="flex:1;cursor:pointer;text-align:center">
+                    ⬆ Importer
+                    <input type="file" id="import-brains" accept=".json">
+                </label>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Départ de course</div>
+            <p style="font-size:0.65rem;color:var(--text-dim);margin-bottom:6px">Cliquez 🏁 sur les cerveaux ci-dessus pour les ajouter</p>
+            <div class="list-container" id="race-list">
+                <div style="padding:8px;font-size:0.65rem;color:var(--text-dim);text-align:center">Aucun cerveau sélectionné</div>
+            </div>
+            <button class="btn success" id="btn-start-race">🏁 Lancer la course</button>
+            <button class="btn danger" id="btn-stop-race" style="display:none">⏹ Arrêter la course</button>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Classement</div>
+            <div id="race-results">—</div>
+        </div>
+
+    </div>
+
+    <!-- ===== ONGLET MISC ===== -->
+    <div class="tab-panel" id="panel-misc">
+
+        <div class="section">
+            <div class="section-title">🖐 ML5 HandPose</div>
+            <p style="font-size:0.65rem;color:var(--text-dim);margin-bottom:6px;line-height:1.5">
+                Contrôlez la voiture leader via les gestes de la main.<br>
+                <b>Incliner gauche/droite</b> → tourner<br>
+                <b>Lever la main</b> → accélérer
+            </p>
+            <button class="btn warn" id="btn-ml5">📷 Activer ML5 HandPose</button>
+            <div id="ml5-status">ML5 inactif</div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Obstacles</div>
+            <p style="font-size:0.65rem;color:var(--text-dim);margin-bottom:6px">
+                <b>Ctrl + Clic</b> pour placer un obstacle sur la piste
+            </p>
+            <button class="btn danger" id="btn-clear-obstacles">🗑 Effacer les obstacles</button>
+        </div>
+
+        <div class="section shortcuts">
+            <div class="section-title">Raccourcis</div>
+            <div class="legend-row"><kbd class="kbd">R</kbd> Réinitialiser</div>
+            <div class="legend-row"><kbd class="kbd">N</kbd> Nouveau circuit</div>
+            <div class="legend-row"><kbd class="kbd">O</kbd> Effacer obstacles</div>
+            <div class="legend-row"><kbd class="kbd">M</kbd> Toggle ML5</div>
+            <div class="legend-row"><kbd class="kbd">Ctrl+Clic</kbd> Ajouter obstacle</div>
+        </div>
+
+    </div>
+
+</div>
+
 </body>
 </html>
