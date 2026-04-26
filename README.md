@@ -378,3 +378,31 @@ python -m http.server 8000
 # Avec Node.js / npx
 npx serve projet-jeu-v2
 ```
+
+## 13. Notre expérience
+
+### Pourquoi ce jeu ?
+
+On a choisi le projet voitures autonomes parce que c'était clairement le plus ambitieux visuellement et le plus satisfaisant à regarder tourner. Voir des voitures complètement nulles à la génération 0 — qui foncent dans le premier mur — devenir des pilotes corrects après 20-30 générations, c'est quelque chose qu'on ne se lasse pas d'observer. C'était aussi un bon prétexte pour explorer TensorFlow.js dans un contexte pas du tout classique (pas de classification d'images, pas de NLP) et pour vraiment comprendre ce que fait un réseau de neurones quand on le prive de back-propagation.
+
+### Les comportements qu'on a choisi d'implémenter
+
+**Le premier comportement qu'on a réglé, c'est l'anti-camping.** Au tout début, sans aucune pénalité, les voitures avaient vite compris qu'elles pouvaient marquer des points en tournant en rond près d'un checkpoint sans jamais prendre de risque. La fitness grimpait, mais personne n'avançait vraiment. On a donc mis en place trois gardes-fous : un timeout global sans checkpoint, une détection de déplacement réel (pas juste de vitesse), et la détection de sens inverse. C'est la combinaison des trois qui a réglé le problème — un seul ne suffisait pas.
+
+**Le deuxième comportement, c'est la séparation en mode course.** Sans ça, toutes les voitures se superposent exactement au même endroit puisqu'elles ont des cerveaux similaires. C'est illisible. On a implémenté un comportement de flocking simple (force de répulsion entre voitures proches) uniquement activé en mode course pour ne pas perturber l'entraînement.
+
+**Le troisième, c'est l'aide au démarrage.** On a eu beaucoup de voitures qui mouraient dans les 2 premières secondes sans jamais avoir bougé, parce que leur cerveau initialisé aléatoirement donnait une poussée quasi nulle dès la frame 1. On a donc forcé un thrust minimal pendant les 30 premières frames pour donner une chance à chaque voiture de « sentir » les murs et d'accumuler quelque chose d'utile dans sa fitness.
+
+### Les difficultés rencontrées
+
+**La gestion mémoire avec TensorFlow.js** a été notre plus gros casse-tête. TF.js crée des tenseurs en mémoire GPU/CPU et ne les libère pas automatiquement. Au début, la simulation ralentissait progressivement jusqu'à planter le navigateur après une dizaine de générations. On a dû wrapper tous les appels dans `tf.tidy()`, appeler explicitement `.dispose()` sur les anciens cerveaux après chaque génération, et vérifier avec `tf.memory()` dans la console que le nombre de tenseurs ne dérivait plus.
+
+**La sérialisation des cerveaux** pour le mode course n'était pas évidente non plus. TF.js ne propose pas nativement un export JSON simple des poids. On a dû extraire les tenseurs un par un avec `.dataSync()`, les convertir en tableaux, les stocker dans un objet JSON avec la forme (`shape`) de chaque tenseur, puis reconstruire le modèle à l'identique à l'import. Le vrai problème était qu'un cerveau importé avec une topologie différente de celle configurée dans l'interface plante silencieusement — on a donc ajouté les métadonnées de topologie dans le JSON pour pouvoir afficher un avertissement.
+
+**Le générateur de circuits** avait un bug subtil : pour les complexités élevées, l'algorithme de recherche de chemin hamiltonien atteignait parfois sa limite de tentatives et tombait dans le fallback (un simple ovale). Le problème c'est que le fallback n'était pas signalé, donc on pensait avoir un circuit complexe alors qu'on avait un ovale. On a ajouté un log dans la console et augmenté le budget de recherche (`maxAttempts`).
+
+**ML5.js** nous a posé un problème inattendu : la version 1.x a complètement changé son API par rapport aux tutoriels disponibles en ligne (qui sont quasi tous écrits pour ML5 0.x). La méthode de callback a changé, le format des keypoints retournés aussi. On a dû lire directement la doc officielle de la v1 et faire des tests dans la console pour identifier la bonne structure de données.
+
+### Ce qu'on retiendra
+
+Ce projet nous a appris que dans la neuroévolution, **la fonction de fitness est vraiment tout**. On a passé plus de temps à la régler qu'à coder le réseau lui-même. Chaque fois qu'on croyait avoir un bon comportement, il y avait un cas limite où les voitures trouvaient une façon inattendue d'optimiser la mauvaise chose. C'est finalement ce qui est fascinant dans ces approches : l'algorithme est « honnête », il optimise exactement ce qu'on lui dit d'optimiser, pas ce qu'on voulait dire.
