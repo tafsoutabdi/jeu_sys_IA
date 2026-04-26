@@ -1,4 +1,4 @@
-# 🏎️ NevoRacing
+# NevoRacing 🏎️
 
 **Projet réalisé par Mathéo BALAZUC et Tafsout ABDI**
 
