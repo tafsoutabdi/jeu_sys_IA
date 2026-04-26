@@ -1,4 +1,4 @@
-# 🏎️ NevoRacing — Neuroévolution de voitures autonomes
+# 🏎️ NevoRacing
 
 **Projet réalisé par Mathéo BALAZUC et Tafsout ABDI**
 
@@ -186,7 +186,7 @@ Les voitures ont plusieurs mécanismes pour éviter les comportements parasites 
 
 ---
 
-## 7. La fonction de fitness (détaillée)
+## 7. La fonction de fitness
 
 C'est la fonction la plus importante de tout le projet — c'est elle qui oriente l'évolution vers le comportement qu'on veut.
 
@@ -378,7 +378,3 @@ python -m http.server 8000
 # Avec Node.js / npx
 npx serve projet-jeu-v2
 ```
-
----
-
-*Projet réalisé par Mathéo BALAZUC & Tafsout ABDI*

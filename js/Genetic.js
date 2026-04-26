@@ -23,7 +23,7 @@ function nextGeneration() {
         setTimeout(() => {
             document.getElementById('success-overlay').style.display = 'flex';
             document.getElementById('success-text').innerText =
-                `✅ Entraînement terminé !\nGénération ${generation} — ${(successRate * 100).toFixed(1)}% de réussite`;
+                `Entraînement terminé !\nGénération ${generation} — ${(successRate * 100).toFixed(1)}% de réussite`;
         }, 100);
     }
 
