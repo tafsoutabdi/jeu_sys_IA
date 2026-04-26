@@ -22,7 +22,7 @@
 10. [Intégration ML5.js](#10-intégration-ml5js)
 11. [Correspondance avec les consignes](#11-correspondance-avec-les-consignes)
 12. [Comment lancer le projet](#12-comment-lancer-le-projet)
-13. [Notre expérience](#13-Notre expérience)
+13. [Notre expérience](#13-notre-expérience)
 
 ---
 
@@ -382,6 +382,7 @@ python -m http.server 8000
 # Avec Node.js / npx
 npx serve projet-jeu-v2
 ```
+---
 
 ## 13. Notre expérience
 
