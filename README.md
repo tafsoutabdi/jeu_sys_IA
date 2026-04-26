@@ -22,7 +22,7 @@
 10. [Intégration ML5.js](#10-intégration-ml5js)
 11. [Correspondance avec les consignes](#11-correspondance-avec-les-consignes)
 12. [Comment lancer le projet](#12-comment-lancer-le-projet)
-13. [Pistes d'amélioration](#13-pistes-damélioration)
+13. [Notre expérience](#13-Notre expérience)
 
 ---
 
